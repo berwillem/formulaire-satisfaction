@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101b3d">
+<title>Disponibilités — Code & Sens</title>
+<style>
+:root{--navy:#101b3d;--blue:#3157d5;--ink:#172033;--muted:#667085;--line:#e5e9f2;--bg:#f4f6fb;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--ink)}
+header{background:var(--navy);color:white;padding:34px 20px 56px}
+.wrap{max-width:850px;margin:auto}.brand{font-size:12px;letter-spacing:.18em;font-weight:800;color:#b9c8ff}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.12;margin:14px 0 10px}.intro{color:#d7def5;max-width:590px;line-height:1.6;margin:0}
+main{max-width:850px;margin:-28px auto 50px;padding:0 16px}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:clamp(18px,4vw,30px);box-shadow:0 12px 36px #17264a12}
+label.field{display:block;font-weight:700;font-size:14px;margin-bottom:9px}input[type=text]{width:100%;height:48px;border:1px solid #d7ddea;border-radius:10px;padding:0 14px;font:inherit;outline:none}input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #3157d51a}
+.section{margin-top:28px}.section h2{font-size:18px;margin:0 0 6px}.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 15px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.day{border:1px solid var(--line);border-radius:13px;padding:15px;min-width:0}.day h3{margin:0 0 13px;font-size:15px}
+.choice{display:flex;align-items:center;gap:10px;padding:10px;border-radius:9px;background:#f7f8fc;margin-top:7px;cursor:pointer;font-size:13px}
+.choice input{width:17px;height:17px;accent-color:var(--blue);flex:none}.choice span{display:flex;flex-direction:column;gap:2px}.choice small{color:var(--muted);font-size:11px}
+.note{margin-top:18px;padding:14px 16px;background:#eef2ff;border:1px solid #dce4ff;border-radius:12px;font-size:13px;line-height:1.55;color:#27376e}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}button{border:0;border-radius:10px;padding:13px 18px;font:700 14px inherit;font-size:14px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:white}.secondary{background:#edf0f6;color:#26324a}button:disabled{opacity:.45;cursor:not-allowed}
+.status{font-size:13px;color:var(--muted);margin-top:12px;min-height:18px}footer{text-align:center;color:#8992a5;font-size:12px;padding:0 15px 28px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.day{padding:13px}.actions button{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="brand">CODE & SENS</div>
+  <h1>Vos disponibilités</h1>
+  <p class="intro">Indiquez les jours et les créneaux auxquels vous êtes disponible afin que nous puissions organiser les plannings de formation.</p>
+</div></header>
+<main><form class="panel" id="availabilityForm">
+  <label class="field" for="fullname">Nom et prénom</label>
+  <input id="fullname" name="fullname" type="text" placeholder="Ex. : Amine Benali" autocomplete="name" required>
+  <section class="section">
+    <h2>Disponibilités hebdomadaires</h2>
+    <p class="hint">Cochez tous les créneaux qui vous conviennent. Vous pouvez sélectionner plusieurs créneaux par jour.</p>
+    <div class="grid" id="days"></div>
+  </section>
+  <div class="note"><strong>À propos des cours du soir</strong><br>Les cours du soir sont organisés sur deux jours par semaine. Cochez tous les soirs où vous êtes disponible : cela nous permettra de choisir les deux jours les plus adaptés.</div>
+  <div class="actions">
+    <button class="primary" type="submit">Envoyer mes disponibilités</button>
+    <button class="secondary" type="button" id="reset">Effacer le formulaire</button>
+  </div>
+  <p class="status" id="status" aria-live="polite">Après validation, vous pourrez transmettre votre réponse via WhatsApp ou copier le récapitulatif.</p>
+</form></main>
+<footer>Code & Sens · Organisation des plannings</footer>
+<script>
+const days=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const slots=[["morning","Matin","09h00 – 13h00"],["afternoon","Après-midi","14h00 – 18h00"],["evening","Soir","18h00 – 21h00"]];
+const host=document.getElementById("days");
+days.forEach((day,i)=>{
+ const card=document.createElement("div");card.className="day";
+ const title=document.createElement("h3");title.textContent=day;card.appendChild(title);
+ slots.forEach(([id,label,time])=>{
+  const lab=document.createElement("label");lab.className="choice";
+  const cb=document.createElement("input");cb.type="checkbox";cb.name=day+"-"+id;cb.value=label+" ("+time+")";
+  const text=document.createElement("span");text.append(document.createTextNode(label));
+  const small=document.createElement("small");small.textContent=time;text.appendChild(small);
+  lab.append(cb,text);card.appendChild(lab);
+ });
+ host.appendChild(card);
+});
+const form=document.getElementById("availabilityForm"),status=document.getElementById("status");
+function summary(){
+ const name=document.getElementById("fullname").value.trim();
+ let lines=["Disponibilités — Code & Sens","Nom et prénom : "+name,""];
+ days.forEach(day=>{
+  const values=slots.filter(([id])=>form.querySelector(`[name="${day}-${id}"]`).checked).map(s=>s[1]+" ("+s[2]+")");
+  lines.push(day+" : "+(values.length?values.join(", "):"Non disponible"));
+ });
+ lines.push("","Cours du soir : les disponibilités du soir indiquent les jours possibles pour organiser deux jours de cours par semaine.");
+ return lines.join("\n");
+}
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!form.reportValidity())return;
+ const text=summary();
+ try{await navigator.clipboard.writeText(text);status.textContent="Récapitulatif copié. Vous pouvez maintenant le coller dans WhatsApp pour l'envoyer."; }
+ catch{status.textContent=text;}
+ const wa="https://wa.me/?text="+encodeURIComponent(text);
+ const link=document.createElement("a");link.href=wa;link.target="_blank";link.rel="noopener";link.textContent="Ouvrir WhatsApp";
+ link.style.cssText="display:inline-block;margin-top:8px;color:#2452c7;font-weight:700";
+ const old=document.getElementById("waLink");if(old)old.remove();link.id="waLink";status.appendChild(document.createElement("br"));status.appendChild(link);
+});
+document.getElementById("reset").addEventListener("click",()=>{form.reset();status.textContent="Formulaire effacé.";const l=document.getElementById("waLink");if(l)l.remove();});
+</script>
+</body></html>
